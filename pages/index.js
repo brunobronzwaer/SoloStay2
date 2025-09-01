@@ -186,6 +186,13 @@ export default function SoloHotelsLanding() {
             )}
           </div>
         )}
+          <footer className="border-t border-neutral-200 bg-white mt-12">
+  <div className="max-w-6xl mx-auto px-4 py-6 text-sm text-neutral-600 flex justify-between">
+    <p>© {new Date().getFullYear()} SoloStay</p>
+    <a href="/about" className="hover:text-blue-600">Over ons</a>
+  </div>
+</footer>
+
       </section>
     </div>
   );
