@@ -108,3 +108,138 @@ export default function SoloHotelsLanding() {
                 <Search className="w-5 h-5" />
                 <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Zoek stad of land (bijv. Lissabon)" className="w-full outline-none bg-transparent" />
               </div>
+              <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 bg-white">
+                <Calendar className="w-5 h-5 text-neutral-500" />
+                <DatePicker
+                  selected={startDate}
+                  onChange={(dates) => {
+                    const [start, end] = dates as [Date, Date];
+                    setStartDate(start);
+                    setEndDate(end);
+                  }}
+                  startDate={startDate}
+                  endDate={endDate}
+                  selectsRange
+                  placeholderText="Selecteer data"
+                  className="outline-none bg-transparent"
+                />
+              </div>
+              <input type="number" min={1} value={guests} onChange={e=>setGuests(+e.target.value)} className="md:w-28 rounded-xl border border-neutral-200 px-3 py-2 bg-white" />
+            </div>
+
+            {/* Flights opt-in */}
+            <div className="mt-3 flex flex-col md:flex-row gap-3 items-stretch">
+              <label className="flex items-center gap-2 bg-white border border-neutral-200 rounded-xl px-3 py-2">
+                <input type="checkbox" checked={includeFlights} onChange={e=>setIncludeFlights(e.target.checked)} />
+                <span className="text-sm">Vlucht + Hotel</span>
+              </label>
+              <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 bg-white md:w-64">
+                <Plane className="w-5 h-5 text-neutral-500" />
+                <input
+                  value={origin}
+                  onChange={e=>setOrigin(e.target.value.toUpperCase())}
+                  placeholder="Vertrek (bv. AMS/EIN)"
+                  className="w-full outline-none bg-transparent uppercase"
+                  maxLength={3}
+                />
+              </div>
+              <button onClick={handleSearch} className="rounded-2xl px-5 py-3 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition md:ml-auto">Zoek</button>
+            </div>
+          </div>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10"/>
+      </section>
+
+      {/* Results */}
+      <section id="results" className="max-w-6xl mx-auto px-4 py-12">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold">Aanbevolen voor jou</h2>
+            <p className="text-neutral-600 mt-1">Eerlijke 1-persoonsprijzen. Geen verrassingen bij het afrekenen.</p>
+          </div>
+        </div>
+
+        {filteredHotels.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 text-neutral-700">
+            Geen hotels gevonden voor jouw filters. Probeer een andere stad of pas het aantal gasten aan.
+          </div>
+        ) : (
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredHotels.map(h => <HotelCard key={h.id} {...h} />)}
+          </div>
+        )}
+
+        {includeFlights && (
+          <div className="mt-10">
+            <div className="flex items-center gap-2">
+              <Plane className="w-5 h-5" />
+              <h3 className="text-xl md:text-2xl font-bold">Vlucht + Hotel opties vanaf {origin.toUpperCase()}</h3>
+            </div>
+            {filteredFlights.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-6 text-neutral-700">
+                Geen vluchten gevonden voor deze combinatie. Probeer een andere bestemming of vertrekcode.
+              </div>
+            ) : (
+              <div className="mt-4 grid md:grid-cols-2 gap-4">
+                {filteredFlights.map(f => (
+                  <article key={f.id} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold">{f.from} → {f.to}</div>
+                      <div className="text-sm text-neutral-600">{f.nonstop ? "Nonstop" : "Met overstap"}</div>
+                    </div>
+                    <div className="mt-1 text-sm text-neutral-700">{f.airline} • {f.duration}</div>
+                    <div className="mt-2 text-lg font-bold">{formatCurrency(f.price)} <span className="text-sm font-medium text-neutral-600">p.p. enkele reis</span></div>
+                    <a href="#" className="inline-block mt-3 rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Selecteer vlucht</a>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly = [], rating, distance }: any) {
+  const pricePerPerson = useMemo(() => {
+    const divisor = Math.max(1, maxOccupancy || 1);
+    return pricePerRoom / (divisor > 1 ? divisor : 1);
+  }, [pricePerRoom, maxOccupancy]);
+
+  const displayRating = Number.isFinite?.(rating) ? Number(rating).toFixed(1) : "—";
+
+  return (
+    <article className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
+      <div className="aspect-[16/10] bg-neutral-100">
+        <img src={img} alt={name} className="w-full h-full object-cover" />
+      </div>
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-lg">{name}</h4>
+          <div className="flex items-center gap-1 text-amber-500">
+            <Star className="w-4 h-4"/>
+            <span className="text-sm text-neutral-800">{displayRating}</span>
+          </div>
+        </div>
+        <div className="mt-1 text-sm text-neutral-600">{city} • {distance}</div>
+        <ul className="mt-3 flex flex-wrap gap-2 text-xs">
+          {soloFriendly.map((f: string, i: number) => (
+            <li key={i} className="px-2 py-1 rounded-full bg-neutral-100 border border-neutral-200">{f}</li>
+          ))}
+        </ul>
+        <div className="mt-4 flex items-end justify-between">
+          <div>
+            <div className="text-xs text-neutral-500">vanaf</div>
+            <div className="text-xl font-bold">{formatCurrency(pricePerPerson)} <span className="text-sm font-medium text-neutral-600">p.p./nacht</span></div>
+          </div>
+          <a
+            href="#"
+            className="rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            title="Boek nu"
+          >Boek nu</a>
+        </div>
+      </div>
+    </article>
+  );
+}
