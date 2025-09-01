@@ -106,13 +106,13 @@ export default function SoloHotelsLanding() {
         {mobileOpen && (
           <div className="md:hidden border-t border-neutral-200 bg-white">
             <nav className="max-w-6xl mx-auto px-4 py-3 grid gap-3 text-base">
-              <a href="#destinations" className="hover:text-blue-600">Bestemmingen</a>
-              <a href="#how" className="hover:text-blue-600">Zo werkt het</a>
-              <a href="#newsletter" className="hover:text-blue-600">Deals</a>
-              <a href="/about" className="hover:text-blue-600">Over ons</a>
-              <a href="/contact" className="hover:text-blue-600">Contact</a>
-              <a href="/register" className="hover:text-blue-600">Registreren</a>
-              <a href="/login" className="inline-block w-full text-center rounded-lg px-3 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Login</a>
+              <a href="#destinations" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Bestemmingen</a>
+              <a href="#how" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Zo werkt het</a>
+              <a href="#newsletter" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Deals</a>
+              <a href="/about" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Over ons</a>
+              <a href="/contact" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Contact</a>
+              <a href="/register" className="hover:text-blue-600" onClick={() => setMobileOpen(false)}>Registreren</a>
+              <a href="/login" className="inline-block w-full text-center rounded-lg px-3 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition" onClick={() => setMobileOpen(false)}>Login</a>
             </nav>
           </div>
         )}
@@ -309,4 +309,23 @@ function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly =
             <li key={i} className="px-2 py-1 rounded-full bg-neutral-100 border border-neutral-200">{f}</li>
           ))}
         </ul>
-        <div className="mt-4 flex
+        <div className="mt-4 flex items-end justify-between">
+          <div>
+            <div className="text-xs text-neutral-500">vanaf</div>
+            <div className="text-xl font-bold">
+              {formatCurrency(pricePerPerson)}{" "}
+              <span className="text-sm font-medium text-neutral-600">p.p./nacht</span>
+            </div>
+          </div>
+          <a
+            href="#"
+            className="rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            title="Boek nu"
+          >
+            Boek nu
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}
