@@ -4,22 +4,27 @@ import { Search, Star, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 
 // ==== CONFIG ====
-const TP_PARTNER_ID = "669798";
-const HOTELLOOK_BASE = "https://search.hotellook.com/";
+// Gebruik de marker (affiliate id) in deeplinks:
+const TP_MARKER = "669798";
+// Hotellook basis voor deeplinks:
+const HOTELLOOK_BASE = "https://hotellook.com/";
 
-function hotellookUrl({ city, checkIn = "", checkOut = "" }, subId = "") {
-  const params = new URLSearchParams({
-    marker: TP_PARTNER_ID,
-    adults: "1",
-    locale: "nl",
-    language: "nl",
-    currency: "EUR",
-    city: city || "",
-    check_in: checkIn || "",
-    check_out: checkOut || "",
-  });
-  if (subId) params.set("sub_id", subId);
-  return `${HOTELLOOK_BASE}?${params.toString()}`;
+// ✅ Nieuwe deeplink helper – voorkomt homepage redirect
+function hotellookUrl({ destination, checkIn = "", checkOut = "", adults = 1, subId = "" }) {
+  const u = new URL(HOTELLOOK_BASE);
+  u.searchParams.set("marker", TP_MARKER);
+  if (destination) u.searchParams.set("destination", destination); // bv. "Barcelona, Spain"
+  if (checkIn)     u.searchParams.set("checkIn", checkIn);          // YYYY-MM-DD
+  if (checkOut)    u.searchParams.set("checkOut", checkOut);        // YYYY-MM-DD
+  u.searchParams.set("adults", String(Math.max(1, adults || 1)));
+  if (subId)       u.searchParams.set("sub_id", subId);
+  return u.toString();
+}
+
+// ✅ Hotellook foto helper (fallbacks niet nodig als id klopt)
+function hotelPhotoUrl(hotelId) {
+  // Foto #1, 800x520, auto-format
+  return `https://photo.hotellook.com/image_v2/limit/h${hotelId}_1/800/520.auto`;
 }
 
 function formatCurrency(n) {
@@ -79,7 +84,14 @@ export default function SoloStay() {
       if (!resp.ok || !data) throw new Error((data && data.error) || "fetch error");
 
       setLiveCity(data.city || cityText);
-      setLiveResults(Array.isArray(data.items) ? data.items : []);
+      const arr = Array.isArray(data.items) ? data.items : [];
+
+      // ✅ Sorteer goedkoopste eerst, filter lege prijzen eruit
+      const itemsSorted = arr
+        .filter(h => Number.isFinite(Number(h.price)))
+        .sort((a, b) => Number(a.price) - Number(b.price));
+
+      setLiveResults(itemsSorted);
     } catch (e) {
       console.error("[fetchLiveHotels] ERROR", e);
       setLiveCity("");
@@ -101,7 +113,7 @@ export default function SoloStay() {
       setFilteredHotels(demo);
 
       const ci = startDate instanceof Date ? startDate.toISOString().slice(0, 10) : "";
-      const co = endDate instanceof Date ? endDate.toISOString().slice(0, 10) : "";
+      const co = endDate   instanceof Date ? endDate.toISOString().slice(0, 10)   : "";
 
       if (q) {
         await fetchLiveHotels(q, ci, co);
@@ -203,7 +215,7 @@ export default function SoloStay() {
                       setStartDate(start || null);
                       setEndDate(end || null);
                     } else {
-                      // safety: als er ooit een enkel Date-object komt
+                      // safety
                       setStartDate(dates || null);
                       setEndDate(null);
                     }
@@ -283,9 +295,10 @@ export default function SoloStay() {
               <article key={`${h.id || i}-${i}`} className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
                 <div className="aspect-[16/10] bg-neutral-100">
                   <img
-                    src={h.photo || "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop"}
+                    src={hotelPhotoUrl(h.id)}
                     alt={h.name || "Hotel"}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
                 <div className="p-4">
@@ -303,12 +316,13 @@ export default function SoloStay() {
                   </div>
                   <a
                     href={hotellookUrl({
-                      city: liveCity || h.city || "",
-                      checkIn: startDate instanceof Date ? startDate.toISOString().slice(0,10) : "",
-                      checkOut: endDate instanceof Date ? endDate.toISOString().slice(0,10) : ""
+                      destination: liveCity || h.city || "",
+                      checkIn:  startDate instanceof Date ? startDate.toISOString().slice(0,10) : "",
+                      checkOut: endDate   instanceof Date ? endDate.toISOString().slice(0,10)   : "",
+                      adults: guests || 1
                     })}
                     target="_blank"
-                    rel="nofollow noopener"
+                    rel="nofollow sponsored noopener"
                     className="inline-block mt-4 rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
                   >
                     Boek nu
