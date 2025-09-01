@@ -73,11 +73,14 @@ export default function SoloHotelsLanding() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="font-extrabold text-xl tracking-tight">Solo<span className="text-blue-600">Stay</span></div>
           <nav className="hidden md:flex gap-6 text-sm items-center">
-            <a href="#destinations" className="hover:text-blue-600">Bestemmingen</a>
-            <a href="#how" className="hover:text-blue-600">Zo werkt het</a>
-            <a href="#newsletter" className="hover:text-blue-600">Deals</a>
-            <a href="/login" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Login</a>
-          </nav>
+  <a href="#destinations" className="hover:text-blue-600">Bestemmingen</a>
+  <a href="#how" className="hover:text-blue-600">Zo werkt het</a>
+  <a href="#newsletter" className="hover:text-blue-600">Deals</a>
+  <a href="/contact" className="hover:text-blue-600">Contact</a>
+  <a href="/register" className="hover:text-blue-600">Registreren</a>
+  <a href="/login" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Login</a>
+</nav>
+
         </div>
       </header>
 
