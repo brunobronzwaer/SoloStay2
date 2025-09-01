@@ -4,10 +4,9 @@ import { Search, Star, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 
 // ==== CONFIG ====
-const TP_PARTNER_ID = "669798"; // jouw Travelpayouts/Hotellook marker
+const TP_PARTNER_ID = "669798";
 const HOTELLOOK_BASE = "https://search.hotellook.com/";
 
-// Genereer Hotellook white-label URL (1 volwassene)
 function hotellookUrl({ city, checkIn = "", checkOut = "" }, subId = "") {
   const params = new URLSearchParams({
     marker: TP_PARTNER_ID,
@@ -24,10 +23,15 @@ function hotellookUrl({ city, checkIn = "", checkOut = "" }, subId = "") {
 }
 
 function formatCurrency(n) {
-  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+  const safe = Number.isFinite(Number(n)) ? Number(n) : 0;
+  try {
+    return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(safe);
+  } catch {
+    return `${safe} €`;
+  }
 }
 
-// Demo-aanbevolen (lokaal)
+// Demo blok
 const HOTELS = [
   { id: "h1", name: "Riverside Boutique Hotel", city: "Lisbon", img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1400&auto=format&fit=crop", pricePerRoom: 120, maxOccupancy: 2, soloFriendly: ["No single supplement", "Central & walkable"], rating: 4.6, distance: "0.6 km from center" },
   { id: "h2", name: "Old Town Studio", city: "Porto", img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1400&auto=format&fit=crop", pricePerRoom: 78, maxOccupancy: 1, soloFriendly: ["Single Room", "Quiet street"], rating: 4.4, distance: "1.1 km from center" },
@@ -37,7 +41,6 @@ const HOTELS = [
 export default function SoloStay() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Zoek state
   const [query, setQuery] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -45,7 +48,6 @@ export default function SoloStay() {
 
   const [filteredHotels, setFilteredHotels] = useState(HOTELS);
 
-  // Live (via eigen API)
   const [liveCity, setLiveCity] = useState("");
   const [liveResults, setLiveResults] = useState([]);
   const [loadingLive, setLoadingLive] = useState(false);
@@ -55,6 +57,7 @@ export default function SoloStay() {
     try {
       setLoadingLive(true);
       setLiveResults([]);
+      console.log("[fetchLiveHotels] start", { cityText, checkInISO, checkOutISO });
 
       const qs = new URLSearchParams({
         city: cityText,
@@ -64,14 +67,21 @@ export default function SoloStay() {
         lang: "nl",
       });
 
-      const resp = await fetch(`/api/hotels?${qs.toString()}`);
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || "fetch error");
+      const url = `/api/hotels?${qs.toString()}`;
+      const resp = await fetch(url);
+      console.log("[fetchLiveHotels] status", resp.status);
+
+      const text = await resp.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = null; }
+      console.log("[fetchLiveHotels] payload", data || text);
+
+      if (!resp.ok || !data) throw new Error((data && data.error) || "fetch error");
 
       setLiveCity(data.city || cityText);
-      setLiveResults(data.items || []);
+      setLiveResults(Array.isArray(data.items) ? data.items : []);
     } catch (e) {
-      console.error(e);
+      console.error("[fetchLiveHotels] ERROR", e);
       setLiveCity("");
       setLiveResults([]);
     } finally {
@@ -80,28 +90,31 @@ export default function SoloStay() {
   }
 
   async function handleSearch() {
-    const q = query.trim().toLowerCase();
+    try {
+      const q = (query || "").trim().toLowerCase();
 
-    // Filter voor demo-blok
-    const demo = HOTELS.filter(h => {
-      const cityMatch = !q || h.city.toLowerCase().includes(q);
-      const guestsOk = Math.max(1, h.maxOccupancy || 1) >= Math.max(1, guests || 1);
-      return cityMatch && guestsOk;
-    });
-    setFilteredHotels(demo);
+      const demo = HOTELS.filter(h => {
+        const cityMatch = !q || (h.city || "").toLowerCase().includes(q);
+        const guestsOk = Math.max(1, h.maxOccupancy || 1) >= Math.max(1, guests || 1);
+        return cityMatch && guestsOk;
+      });
+      setFilteredHotels(demo);
 
-    // Live ophalen via server-side route
-    const ci = startDate ? startDate.toISOString().slice(0, 10) : "";
-    const co = endDate ? endDate.toISOString().slice(0, 10) : "";
-    if (q) {
-      await fetchLiveHotels(q, ci, co);
-    } else {
-      setLiveCity("");
-      setLiveResults([]);
+      const ci = startDate instanceof Date ? startDate.toISOString().slice(0, 10) : "";
+      const co = endDate instanceof Date ? endDate.toISOString().slice(0, 10) : "";
+
+      if (q) {
+        await fetchLiveHotels(q, ci, co);
+      } else {
+        setLiveCity("");
+        setLiveResults([]);
+      }
+
+      const el = typeof document !== "undefined" && document.getElementById("results");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {
+      console.error("[handleSearch] ERROR", e);
     }
-
-    const el = typeof document !== "undefined" && document.getElementById("results");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -182,14 +195,21 @@ export default function SoloStay() {
               <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 bg-white">
                 <Calendar className="w-5 h-5 text-neutral-500" />
                 <DatePicker
-                  selected={startDate}
+                  selected={startDate || null}
                   onChange={(dates) => {
-                    const [start, end] = dates || [];
-                    setStartDate(start || null);
-                    setEndDate(end || null);
+                    // react-datepicker geeft bij range ALTIJD een array terug
+                    if (Array.isArray(dates)) {
+                      const [start, end] = dates;
+                      setStartDate(start || null);
+                      setEndDate(end || null);
+                    } else {
+                      // safety: als er ooit een enkel Date-object komt
+                      setStartDate(dates || null);
+                      setEndDate(null);
+                    }
                   }}
-                  startDate={startDate}
-                  endDate={endDate}
+                  startDate={startDate || null}
+                  endDate={endDate || null}
                   selectsRange
                   placeholderText="Selecteer data"
                   className="outline-none bg-transparent"
@@ -260,20 +280,20 @@ export default function SoloStay() {
         ) : (
           <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {liveResults.map((h, i) => (
-              <article key={`${h.id}-${i}`} className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
+              <article key={`${h.id || i}-${i}`} className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
                 <div className="aspect-[16/10] bg-neutral-100">
                   <img
                     src={h.photo || "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop"}
-                    alt={h.name}
+                    alt={h.name || "Hotel"}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-lg">{h.name}</h4>
-                    <div className="text-sm text-neutral-600">{h.stars ? `${h.stars}★` : "—"}</div>
+                    <h4 className="font-semibold text-lg">{h.name || "Hotel"}</h4>
+                    <div className="text-sm text-neutral-600">{Number.isFinite(h.stars) ? `${h.stars}★` : "—"}</div>
                   </div>
-                  <div className="mt-1 text-sm text-neutral-600">{h.city}</div>
+                  <div className="mt-1 text-sm text-neutral-600">{h.city || liveCity}</div>
                   <div className="mt-3">
                     <div className="text-xs text-neutral-500">vanaf</div>
                     <div className="text-xl font-bold">
@@ -283,9 +303,9 @@ export default function SoloStay() {
                   </div>
                   <a
                     href={hotellookUrl({
-                      city: liveCity || h.city,
-                      checkIn: startDate ? startDate.toISOString().slice(0,10) : "",
-                      checkOut: endDate ? endDate.toISOString().slice(0,10) : ""
+                      city: liveCity || h.city || "",
+                      checkIn: startDate instanceof Date ? startDate.toISOString().slice(0,10) : "",
+                      checkOut: endDate instanceof Date ? endDate.toISOString().slice(0,10) : ""
                     })}
                     target="_blank"
                     rel="nofollow noopener"
@@ -342,10 +362,11 @@ export default function SoloStay() {
 function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly = [], rating, distance }) {
   const pricePerPerson = useMemo(() => {
     const divisor = Math.max(1, maxOccupancy || 1);
-    return pricePerRoom / (divisor > 1 ? divisor : 1);
+    const val = Number.isFinite(Number(pricePerRoom)) ? Number(pricePerRoom) : 0;
+    return val / (divisor > 1 ? divisor : 1);
   }, [pricePerRoom, maxOccupancy]);
 
-  const displayRating = Number.isFinite && Number.isFinite(rating) ? Number(rating).toFixed(1) : "—";
+  const displayRating = Number.isFinite(Number(rating)) ? Number(rating).toFixed(1) : "—";
 
   return (
     <article className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
