@@ -236,6 +236,47 @@ function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly =
             title="Boek nu"
           >Boek nu</a>
         </div>
+              <footer className="border-t border-neutral-200 bg-white mt-12">
+  <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8 text-sm">
+    
+    {/* Logo + korte intro */}
+    <div>
+      <div className="font-extrabold text-xl tracking-tight mb-2">
+        Solo<span className="text-blue-600">Stay</span>
+      </div>
+      <p className="text-neutral-600">
+        Eerlijke 1-persoonsprijzen voor hotels en vluchten.
+        Geen verrassingen, geen toeslagen — reizen op jouw manier.
+      </p>
+    </div>
+
+    {/* Navigatie */}
+    <div>
+      <h4 className="font-semibold mb-3">Navigatie</h4>
+      <ul className="space-y-2">
+        <li><a href="/about" className="hover:text-blue-600">Over ons</a></li>
+        <li><a href="/contact" className="hover:text-blue-600">Contact</a></li>
+        <li><a href="/register" className="hover:text-blue-600">Registreren</a></li>
+        <li><a href="/login" className="hover:text-blue-600">Login</a></li>
+      </ul>
+    </div>
+
+    {/* Socials / nieuwsbrief */}
+    <div>
+      <h4 className="font-semibold mb-3">Blijf verbonden</h4>
+      <p className="text-neutral-600 mb-3">Volg ons voor updates en deals:</p>
+      <div className="flex gap-4">
+        <a href="#" className="hover:text-blue-600">🌍 Instagram</a>
+        <a href="#" className="hover:text-blue-600">🐦 Twitter</a>
+      </div>
+    </div>
+  </div>
+
+  <div className="border-t border-neutral-200 text-center text-xs text-neutral-500 py-4">
+    © {new Date().getFullYear()} SoloStay. Alle rechten voorbehouden.
+  </div>
+</footer>
+
       </div>
     </article>
   );
