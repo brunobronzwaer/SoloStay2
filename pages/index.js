@@ -1,22 +1,9 @@
 import React, { useMemo, useState } from "react";
 import Head from "next/head";
-import { Search, ShieldCheck, Users, Percent, Star, MapPin, Calendar, Plane } from "lucide-react";
+import { Search, ShieldCheck, Users, Percent, Star, Calendar, Plane } from "lucide-react";
 import DatePicker from "react-datepicker";
 
 // --- Mock data ---
-const DESTINATIONS = [
-  { slug: "lisbon", name: "Lisbon", country: "Portugal", img: "https://images.unsplash.com/photo-1518306727298-4c3d516e3870?q=80&w=1400&auto=format&fit=crop", tags: ["sunny", "walkable", "budget"], ppn: 68 },
-  { slug: "barcelona", name: "Barcelona", country: "Spain", img: "https://images.unsplash.com/photo-1494783367193-149034c05e8f?q=80&w=1400&auto=format&fit=crop", tags: ["beach", "food", "nightlife"], ppn: 92 },
-  { slug: "porto", name: "Porto", country: "Portugal", img: "https://images.unsplash.com/photo-1520975922375-5d99f2dce040?q=80&w=1400&auto=format&fit=crop", tags: ["cozy", "historic", "budget"], ppn: 61 },
-  { slug: "seville", name: "Seville", country: "Spain", img: "https://images.unsplash.com/photo-1579503841516-e0bd7f8e3fbb?q=80&w=1400&auto=format&fit=crop", tags: ["warm", "walkable"], ppn: 74 },
-  { slug: "valencia", name: "Valencia", country: "Spain", img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop", tags: ["beach", "modern"], ppn: 70 },
-  { slug: "prague", name: "Prague", country: "Czechia", img: "https://images.unsplash.com/photo-1471623432079-b009d30b6729?q=80&w=1400&auto=format&fit=crop", tags: ["historic", "romantic"], ppn: 64 },
-  { slug: "budapest", name: "Budapest", country: "Hungary", img: "https://images.unsplash.com/photo-1546707012-c46675f12741?q=80&w=1400&auto=format&fit=crop", tags: ["thermal baths", "nightlife"], ppn: 58 },
-  { slug: "copenhagen", name: "Copenhagen", country: "Denmark", img: "https://images.unsplash.com/photo-1502790671504-542ad42d5189?q=80&w=1400&auto=format&fit=crop", tags: ["safe", "design"], ppn: 115 },
-  { slug: "reykjavik", name: "Reykjavík", country: "Iceland", img: "https://images.unsplash.com/photo-1564325724739-bae0bd08762f?q=80&w=1400&auto=format&fit=crop", tags: ["nature", "safe"], ppn: 128 },
-  { slug: "krakow", name: "Kraków", country: "Poland", img: "https://images.unsplash.com/photo-1506806732259-39c2d0268443?q=80&w=1400&auto=format&fit=crop", tags: ["budget", "culture"], ppn: 46 },
-];
-
 const HOTELS = [
   { id: "h1", name: "Riverside Boutique Hotel", city: "Lisbon", img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1400&auto=format&fit=crop", pricePerRoom: 120, maxOccupancy: 2, soloFriendly: ["No single supplement", "Central & walkable"], rating: 4.6, distance: "0.6 km from center" },
   { id: "h2", name: "Old Town Studio", city: "Porto", img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1400&auto=format&fit=crop", pricePerRoom: 78, maxOccupancy: 1, soloFriendly: ["Single Room", "Quiet street"], rating: 4.4, distance: "1.1 km from center" },
@@ -29,26 +16,20 @@ const FLIGHT_MOCKS = [
   { id: "f3", from: "AMS", to: "SVQ", airline: "HV", duration: "3u05", price: 109, nonstop: true },
 ];
 
-function formatCurrency(n: number) {
+function formatCurrency(n) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 }
 
 export default function SoloHotelsLanding() {
   const [query, setQuery] = useState("");
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [guests, setGuests] = useState(1);
   const [filteredHotels, setFilteredHotels] = useState(HOTELS);
 
   const [includeFlights, setIncludeFlights] = useState(false);
   const [origin, setOrigin] = useState("AMS");
-  const [filteredFlights, setFilteredFlights] = useState<typeof FLIGHT_MOCKS>([]);
-
-  const filteredDestinations = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return DESTINATIONS;
-    return DESTINATIONS.filter(d => d.name.toLowerCase().includes(q) || d.country.toLowerCase().includes(q));
-  }, [query]);
+  const [filteredFlights, setFilteredFlights] = useState([]);
 
   function handleSearch() {
     const q = query.trim().toLowerCase();
@@ -60,14 +41,20 @@ export default function SoloHotelsLanding() {
     setFilteredHotels(results);
 
     if (includeFlights) {
-      const destCode = (q.includes("lis") && "LIS") || (q.includes("sev") && "SVQ") || (q.includes("por") && "OPO") || null;
-      const flights = FLIGHT_MOCKS.filter(f => (!destCode || f.to === destCode) && f.from.toUpperCase() === origin.toUpperCase());
+      const destCode =
+        (q.includes("lis") && "LIS") ||
+        (q.includes("sev") && "SVQ") ||
+        (q.includes("por") && "OPO") ||
+        null;
+      const flights = FLIGHT_MOCKS.filter(
+        f => (!destCode || f.to === destCode) && f.from.toUpperCase() === origin.toUpperCase()
+      );
       setFilteredFlights(flights);
     } else {
       setFilteredFlights([]);
     }
 
-    const el = document.getElementById("results");
+    const el = typeof document !== "undefined" && document.getElementById("results");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -113,7 +100,7 @@ export default function SoloHotelsLanding() {
                 <DatePicker
                   selected={startDate}
                   onChange={(dates) => {
-                    const [start, end] = dates as [Date, Date];
+                    const [start, end] = dates || [];
                     setStartDate(start);
                     setEndDate(end);
                   }}
@@ -201,13 +188,13 @@ export default function SoloHotelsLanding() {
   );
 }
 
-function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly = [], rating, distance }: any) {
+function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly = [], rating, distance }) {
   const pricePerPerson = useMemo(() => {
     const divisor = Math.max(1, maxOccupancy || 1);
     return pricePerRoom / (divisor > 1 ? divisor : 1);
   }, [pricePerRoom, maxOccupancy]);
 
-  const displayRating = Number.isFinite?.(rating) ? Number(rating).toFixed(1) : "—";
+  const displayRating = Number.isFinite && Number.isFinite(rating) ? Number(rating).toFixed(1) : "—";
 
   return (
     <article className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm hover:shadow-xl transition">
@@ -224,7 +211,7 @@ function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly =
         </div>
         <div className="mt-1 text-sm text-neutral-600">{city} • {distance}</div>
         <ul className="mt-3 flex flex-wrap gap-2 text-xs">
-          {soloFriendly.map((f: string, i: number) => (
+          {soloFriendly.map((f, i) => (
             <li key={i} className="px-2 py-1 rounded-full bg-neutral-100 border border-neutral-200">{f}</li>
           ))}
         </ul>
