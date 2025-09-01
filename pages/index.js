@@ -31,6 +31,8 @@ export default function SoloHotelsLanding() {
   const [origin, setOrigin] = useState("AMS");
   const [filteredFlights, setFilteredFlights] = useState([]);
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const resultsCountLabel = filteredHotels.length === 1 ? "1 resultaat" : `${filteredHotels.length} resultaten`;
 
   function handleSearch() {
@@ -71,14 +73,25 @@ export default function SoloHotelsLanding() {
         <title>SoloStay</title>
       </Head>
 
-      {/* Header (nu zichtbaar op mobiel) */}
-      <header className="sticky top-0 z-30 backdrop-blur bg-white/80 border-b border-neutral-200">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-neutral-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="/" className="font-extrabold text-xl tracking-tight">
             Solo<span className="text-blue-600">Stay</span>
           </a>
-          {/* Op mobiel is dit nu ook zichtbaar en wrapt netjes */}
-          <nav className="flex flex-wrap gap-4 text-sm items-center">
+
+          {/* Hamburger (mobiel) */}
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden rounded-lg px-3 py-2 border border-neutral-300 bg-white text-sm"
+            aria-label="Open menu"
+            aria-expanded={mobileOpen ? "true" : "false"}
+          >
+            Menu
+          </button>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex gap-6 text-sm items-center">
             <a href="#destinations" className="hover:text-blue-600">Bestemmingen</a>
             <a href="#how" className="hover:text-blue-600">Zo werkt het</a>
             <a href="#newsletter" className="hover:text-blue-600">Deals</a>
@@ -88,6 +101,21 @@ export default function SoloHotelsLanding() {
             <a href="/login" className="rounded-lg px-3 py-1.5 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Login</a>
           </nav>
         </div>
+
+        {/* Mobile dropdown */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-neutral-200 bg-white">
+            <nav className="max-w-6xl mx-auto px-4 py-3 grid gap-3 text-base">
+              <a href="#destinations" className="hover:text-blue-600">Bestemmingen</a>
+              <a href="#how" className="hover:text-blue-600">Zo werkt het</a>
+              <a href="#newsletter" className="hover:text-blue-600">Deals</a>
+              <a href="/about" className="hover:text-blue-600">Over ons</a>
+              <a href="/contact" className="hover:text-blue-600">Contact</a>
+              <a href="/register" className="hover:text-blue-600">Registreren</a>
+              <a href="/login" className="inline-block w-full text-center rounded-lg px-3 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Login</a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero */}
@@ -216,10 +244,9 @@ export default function SoloHotelsLanding() {
         )}
       </section>
 
-      {/* Footer (nieuw toegevoegd) */}
+      {/* Footer */}
       <footer className="border-t border-neutral-200 bg-white mt-12">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8 text-sm">
-          {/* Logo + intro */}
           <div>
             <div className="font-extrabold text-xl tracking-tight mb-2">
               Solo<span className="text-blue-600">Stay</span>
@@ -229,8 +256,6 @@ export default function SoloHotelsLanding() {
               Geen verrassingen, geen toeslagen — reizen op jouw manier.
             </p>
           </div>
-
-          {/* Navigatie */}
           <div>
             <h4 className="font-semibold mb-3">Navigatie</h4>
             <ul className="space-y-2">
@@ -240,8 +265,6 @@ export default function SoloHotelsLanding() {
               <li><a href="/login" className="hover:text-blue-600">Login</a></li>
             </ul>
           </div>
-
-          {/* Socials / nieuwsbrief */}
           <div>
             <h4 className="font-semibold mb-3">Blijf verbonden</h4>
             <p className="text-neutral-600 mb-3">Volg ons voor updates en deals:</p>
@@ -251,7 +274,6 @@ export default function SoloHotelsLanding() {
             </div>
           </div>
         </div>
-
         <div className="border-t border-neutral-200 text-center text-xs text-neutral-500 py-4">
           © {new Date().getFullYear()} SoloStay. Alle rechten voorbehouden.
         </div>
@@ -287,23 +309,4 @@ function HotelCard({ name, city, img, pricePerRoom, maxOccupancy, soloFriendly =
             <li key={i} className="px-2 py-1 rounded-full bg-neutral-100 border border-neutral-200">{f}</li>
           ))}
         </ul>
-        <div className="mt-4 flex items-end justify-between">
-          <div>
-            <div className="text-xs text-neutral-500">vanaf</div>
-            <div className="text-xl font-bold">
-              {formatCurrency(pricePerPerson)}{" "}
-              <span className="text-sm font-medium text-neutral-600">p.p./nacht</span>
-            </div>
-          </div>
-          <a
-            href="#"
-            className="rounded-xl px-4 py-2 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-            title="Boek nu"
-          >
-            Boek nu
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-}
+        <div className="mt-4 flex
