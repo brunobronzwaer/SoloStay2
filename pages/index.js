@@ -157,14 +157,20 @@ export default function SoloHotelsLanding() {
                   className="outline-none bg-transparent"
                 />
               </div>
-              <input
-                type="number"
-                min={1}
-                value={guests}
-                onChange={e => setGuests(+e.target.value)}
-                className="md:w-28 rounded-xl border border-neutral-200 px-3 py-2 bg-white"
-                placeholder="1"
-              />
+             <div className="md:w-44 flex items-center justify-between gap-2 rounded-xl border border-neutral-200 px-3 py-2 bg-white">
+  <input
+    type="number"
+    min={1}
+    value={guests}
+    onChange={e => setGuests(Math.max(1, +e.target.value || 1))}
+    className="w-16 outline-none bg-transparent"
+    aria-label="Aantal personen"
+  />
+  <span className="text-sm text-neutral-600">
+    {guests === 1 ? "persoon" : "personen"}
+  </span>
+</div>
+
             </div>
 
             {/* Flights opt-in */}
