@@ -137,15 +137,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-neutral-900">
-      <Head>
-        <script src="https://cdn.tailwindcss.com" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>SoloStay — Elke dag de beste solo-hoteldeals</title>
-        <meta
-          name="description"
-          content="Elke dag de beste hoteldeals voor solo reizigers. Alleen de koopjes — snel en simpel boeken."
-        />
-      </Head>
+     <Head>
+  <script src="https://cdn.tailwindcss.com" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SoloStay — Elke dag de beste solo-hoteldeals</title>
+  <meta
+    name="description"
+    content="Elke dag de beste hoteldeals voor solo reizigers. Alleen de koopjes — snel en simpel boeken."
+  />
+  <meta
+    name="tradetracker-site-verification"
+    content="5fca9133cd263fb5371d640016a0dbe61b6c2b"
+  />
+</Head>
 
       {/* TradeTracker SuperTag */}
       <Script
