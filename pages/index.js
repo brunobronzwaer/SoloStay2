@@ -144,6 +144,27 @@ export default function Home() {
           name="description"
           content="Elke dag de beste hoteldeals voor solo reizigers. Alleen de koopjes — snel en simpel boeken."
         />
+            <head>
+  <meta charset="UTF-8">
+  <title>Mijn site</title>
+  
+  <!-- Begin TradeTracker SuperTag Code -->
+  <script type="text/javascript">
+    var _TradeTrackerTagOptions = {
+      t: 'a',
+      s: '494921',
+      chk: '347bee0680b2765249798e06b756ae23e',
+      overrideOptions: {}
+    };
+    (function() {
+      var tt = document.createElement('script'),
+          s = document.getElementsByTagName('script')[0];
+      tt.setAttribute('type', 'text/javascript');
+      tt.setAttribute('src', (document.location.protocol == 'https:' ? 'https' : 'http') + '://tm.tradetracker.net/tag?t=' + _TradeTrackerTagOptions.t + '&s=' + _TradeTrackerTagOptions.s + '&chk=' + _TradeTrackerTagOptions.chk);
+      s.parentNode.insertBefore(tt, s);
+    })();
+  </script>
+  <!-- End TradeTracker SuperTag Code -->
       </Head>
 
       {/* HERO */}
