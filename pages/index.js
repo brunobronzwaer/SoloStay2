@@ -20,7 +20,7 @@ function wlUrl({ destination, checkIn = "", checkOut = "", adults = 1, subId = "
 }
 
 const photoUrl = (id) => `https://photo.hotellook.com/image_v2/limit/h${id}_1/800/520.auto`;
-const € = (n) =>
+const euro = (n) =>
   Number.isFinite(+n)
     ? new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(+n)
     : "€ –";
@@ -259,7 +259,7 @@ function Card({ title, subtitle, price, img, href }) {
         <div className="mt-3">
           <div className="text-xs text-neutral-500">vanaf</div>
           <div className="text-2xl font-bold">
-            {€(price)} <span className="text-sm font-medium text-neutral-500">p.p./nacht*</span>
+            {euro(price)} <span className="text-sm font-medium text-neutral-500">p.p./nacht*</span>
           </div>
         </div>
         <a
