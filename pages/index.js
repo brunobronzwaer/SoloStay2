@@ -1,12 +1,14 @@
 import React from "react";
 import Head from "next/head";
-import { Search, Flame } from "lucide-react";
+import { Search, CalendarDays, UtensilsCrossed, Star, ArrowRight } from "lucide-react";
 
 // ====== CONFIG ======
 const TP_MARKER = "669798";
-// Vervang straks door jouw WL-domein, bv. https://hotels.solostay.nl/
+// Vervang door jouw eigen WL-domein zodra je die hebt (bv. https://hotels.solostay.nl/)
 const WL_BASE = "https://hotellook.com/";
-const MAX_PRICE = 200; // €-cap per nacht om dure resultaten te verbergen
+const MAX_PRICE = 220; // €-cap per nacht om dure resultaten te verbergen
+const HERO_IMG =
+  "https://images.unsplash.com/photo-1502920917128-1aa500764ce7?q=80&w=2000&auto=format&fit=crop"; // tropisch strand vibe
 
 function wlUrl({ destination, checkIn = "", checkOut = "", adults = 1, subId = "" }) {
   const u = new URL(WL_BASE);
@@ -19,7 +21,7 @@ function wlUrl({ destination, checkIn = "", checkOut = "", adults = 1, subId = "
   return u.toString();
 }
 
-const photoUrl = (id) => `https://photo.hotellook.com/image_v2/limit/h${id}_1/800/520.auto`;
+const photoUrl = (id) => `https://photo.hotellook.com/image_v2/limit/h${id}_1/900/600.auto`;
 const euro = (n) =>
   Number.isFinite(+n)
     ? new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(+n)
@@ -30,12 +32,20 @@ export default function Home() {
   const [deals, setDeals] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
 
-  // helper: veilig JSON fetchen
+  // — helpers —
   async function safeFetchJson(url, signal) {
     const r = await fetch(url, { signal, headers: { Accept: "application/json" } });
     const data = await r.json().catch(() => null);
     if (!r.ok || !data) throw new Error(data?.error || "API error");
     return data;
+  }
+
+  function badgeNights(checkIn, checkOut) {
+    if (!checkIn || !checkOut) return null;
+    const a = new Date(checkIn), b = new Date(checkOut);
+    const nights = Math.max(1, Math.round((b - a) / 86400000));
+    return `${nights} ${nights === 1 ? "nacht" : "nachten"}`;
+    // TravelHunter toont vaak “8 dagen”; wij houden het simpel met nachten.
   }
 
   // standaard curated deals bij laden (5 steden, volgend weekend)
@@ -51,19 +61,25 @@ export default function Home() {
           const qs = new URLSearchParams({ city, checkIn, checkOut, adults: "1", lang: "nl", limit: "100" });
           try {
             const data = await safeFetchJson(`/api/hotels?${qs}`, ac.signal);
-            const top = (data.items || [])
+            const cleaned = (data.items || [])
               .filter((h) => Number.isFinite(+h.price))
-              .filter((h) => +h.price <= MAX_PRICE) // cap op prijs
+              .filter((h) => +h.price <= MAX_PRICE)
+              .map((h) => ({
+                ...h,
+                destination: data.city,
+                checkIn: data.checkIn,
+                checkOut: data.checkOut,
+              }))
               .sort((a, b) => +a.price - +b.price)
-              .slice(0, 3)
-              .map((h) => ({ ...h, destination: data.city, checkIn: data.checkIn, checkOut: data.checkOut }));
-            all.push(...top);
+              .slice(0, 4); // neem de 4 beste per stad
+            all.push(...cleaned);
           } catch {
             /* stad overslaan bij fout */
           }
         }
+        // Globaal aantrekkelijk sorteren
         all.sort((a, b) => +a.price - +b.price);
-        setDeals(all);
+        setDeals(all.slice(0, 12)); // toon 12 topdeals
       } finally {
         setLoading(false);
       }
@@ -71,7 +87,7 @@ export default function Home() {
     return () => ac.abort();
   }, []);
 
-  // zoeken op eigen bestemming (ook zonder datum → volgend weekend)
+  // zoeken op eigen bestemming (volgend weekend)
   async function onSubmit(e) {
     e.preventDefault();
     const city = (q || "").trim();
@@ -86,10 +102,9 @@ export default function Home() {
         .filter((h) => Number.isFinite(+h.price))
         .filter((h) => +h.price <= MAX_PRICE)
         .sort((a, b) => +a.price - +b.price)
-        .slice(0, 9)
+        .slice(0, 12)
         .map((h) => ({ ...h, destination: data.city, checkIn: data.checkIn, checkOut: data.checkOut }));
       setDeals(items);
-      // smooth scroll
       const el = document.getElementById("deals");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
@@ -100,47 +115,47 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] text-neutral-900">
+    <div className="min-h-screen bg-[#FAFAFC] text-neutral-900">
       <Head>
         <script src="https://cdn.tailwindcss.com" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>SoloStay — De beste solo-hoteldeals</title>
-        <meta
-          name="description"
-          content="Curated hoteldeals voor solo reizigers. Rood = korting. Eerlijke 1-persoonsprijzen zonder gedoe."
-        />
+        <title>SoloStay — Elke dag de beste solo-hoteldeals</title>
+        <meta name="description" content="Elke dag de beste hoteldeals voor solo reizigers. Alleen de koopjes — snel en simpel boeken." />
       </Head>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        {/* zachte blobs in rood/groen tint voor diepte */}
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-rose-200/50 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 pt-16 pb-12">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-            De beste solo-hoteldeals{" "}
-            <span className="block text-rose-600">strak geselecteerd</span>
+      {/* HERO — groot beeld, center search, discount vibe */}
+      <section
+        className="relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('${HERO_IMG}')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 text-center">
+          <h1 className="text-white text-4xl md:text-6xl font-extrabold leading-tight drop-shadow-sm">
+            Elke dag de beste <span className="text-rose-300">solo-hoteldeals</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-neutral-600 text-lg">
-            Vind snel je scherpste 1-persoonsprijs. We tonen alleen de <strong className="text-rose-700">koopjes</strong>.
+          <p className="mt-3 text-white/90 text-lg">
+            We tonen alleen de scherpste prijzen. Rood = <span className="font-semibold">korting</span>.
           </p>
 
-          {/* ZOEK – alleen bestemming */}
-          <form onSubmit={onSubmit} className="mt-8">
-            <div className="flex flex-col md:flex-row gap-3 items-stretch">
-              <div className="flex-1 flex items-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
+          {/* Zoekveld (alleen bestemming) */}
+          <form onSubmit={onSubmit} className="mt-8 max-w-2xl mx-auto">
+            <div className="flex items-stretch rounded-full overflow-hidden bg-white shadow-lg ring-1 ring-black/5">
+              <div className="px-4 py-3 flex items-center gap-2 flex-1">
                 <Search className="w-5 h-5 text-neutral-500" />
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Waar wil jij naartoe? (bijv. Sevilla)"
+                  placeholder="Waar wil jij naartoe?"
                   className="w-full outline-none bg-transparent"
                   aria-label="Bestemming"
                 />
               </div>
               <button
                 type="submit"
-                className="rounded-2xl px-6 py-3 bg-rose-600 text-white font-semibold shadow-sm hover:bg-rose-700 transition"
+                className="px-6 md:px-8 bg-rose-600 text-white font-semibold hover:bg-rose-700 transition"
               >
                 Zoek deals
               </button>
@@ -149,26 +164,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DEALS */}
-      <section id="deals" className="max-w-6xl mx-auto px-6 pt-6 pb-16">
-        <div className="flex items-end justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-rose-600" />
-            <h2 className="text-2xl md:text-3xl font-bold">Topdeals voor solo reizigers</h2>
-          </div>
+      {/* AANBIEDINGEN GRID */}
+      <section id="deals" className="max-w-6xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl md:text-3xl font-bold">Aanbiedingen</h2>
           <div className="text-sm text-neutral-600">{loading ? "Laden…" : `${deals.length} deals`}</div>
         </div>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">Deals laden…</div>
+          <ShimmerGrid />
         ) : !deals.length ? (
           <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-            Nog geen deals. Probeer een andere bestemming of kom snel terug!
+            Geen deals gevonden. Probeer een andere bestemming of kom later terug.
           </div>
         ) : (
-          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {deals.map((h, i) => (
-              <DealCard key={`${h.id}-${i}`} h={h} />
+              <DealCard key={`${h.id}-${i}`} h={h} nightsText={badgeNights(h.checkIn, h.checkOut)} />
             ))}
           </div>
         )}
@@ -179,46 +191,63 @@ export default function Home() {
   );
 }
 
-/* ===== Card ===== */
-function DealCard({ h }) {
+/* ===== Cards ===== */
+function DealCard({ h, nightsText }) {
+  const href = wlUrl({
+    destination: h.destination,
+    checkIn: h.checkIn,
+    checkOut: h.checkOut,
+    adults: 1,
+    subId: `deal_${h.id}`,
+  });
+
   return (
-    <article className="rounded-3xl overflow-hidden border border-neutral-100 bg-white shadow-md hover:shadow-xl transition">
-      <div className="aspect-[16/10] bg-neutral-100">
-        <img
-          src={photoUrl(h.id)}
-          alt={h.name || "Hotel"}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-lg">{h.name || "Hotel"}</h4>
-          <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-700 text-xs px-2 py-1">
-            Deal
-          </span>
+    <article className="relative rounded-3xl overflow-hidden bg-white border border-neutral-100 shadow-md hover:shadow-xl transition">
+      {/* Price ribbon */}
+      <div className="absolute left-0 top-4 z-10">
+        <div className="bg-rose-600 text-white text-sm font-bold px-3 py-1 rounded-r-full shadow">
+          vanaf {euro(h.price)}
         </div>
-        <div className="mt-1 text-sm text-neutral-600">{h.destination}</div>
-        <div className="mt-3">
-          <div className="text-xs text-neutral-500">vanaf</div>
-          <div className="text-2xl font-bold">
-            {euro(h.price)} <span className="text-sm font-medium text-neutral-500">p.p./nacht*</span>
+      </div>
+
+      <div className="aspect-[16/10] bg-neutral-100">
+        <img src={photoUrl(h.id)} alt={h.name || "Hotel"} className="w-full h-full object-cover" loading="lazy" />
+      </div>
+
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-semibold text-lg leading-snug line-clamp-2">{h.name || "Hotel"}</h3>
+          <div className="shrink-0">
+            <Stars stars={h.stars} />
           </div>
         </div>
+
+        <div className="mt-1 text-sm text-neutral-600">{h.destination}</div>
+
+        {/* specs row */}
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-neutral-700">
+          {nightsText && (
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays className="w-4 h-4 text-rose-600" />
+              {nightsText}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1">
+            <UtensilsCrossed className="w-4 h-4 text-rose-600" />
+            Logies
+          </span>
+        </div>
+
+        {/* CTA */}
         <a
-          href={wlUrl({
-            destination: h.destination,
-            checkIn: h.checkIn,
-            checkOut: h.checkOut,
-            adults: 1,
-            subId: `deal_${h.id}`,
-          })}
+          href={href}
           target="_blank"
           rel="nofollow sponsored noopener"
-          className="inline-block mt-4 rounded-full px-5 py-2.5 bg-rose-600 text-white font-semibold shadow-sm hover:bg-rose-700 transition"
+          className="mt-4 inline-flex items-center justify-center gap-2 w-full rounded-full px-5 py-2.5 bg-rose-600 text-white font-semibold shadow-sm hover:bg-rose-700 transition"
         >
-          Waar te boeken?
+          Bekijk aanbieding <ArrowRight className="w-4 h-4" />
         </a>
+
         <div className="mt-2 text-[11px] text-neutral-500">
           *Indicatief. Klik om aanbieders te vergelijken (via partner).
         </div>
@@ -227,10 +256,40 @@ function DealCard({ h }) {
   );
 }
 
+function Stars({ stars }) {
+  const s = Number(stars);
+  if (!Number.isFinite(s) || s <= 0) return null;
+  return (
+    <div className="inline-flex items-center gap-0.5 text-amber-500">
+      {Array.from({ length: Math.min(5, Math.round(s)) }).map((_, i) => (
+        <Star key={i} className="w-4 h-4 fill-current" />
+      ))}
+    </div>
+  );
+}
+
+/* ===== Shimmer skeleton ===== */
+function ShimmerGrid() {
+  return (
+    <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-3xl overflow-hidden bg-white border border-neutral-100 shadow-md">
+          <div className="aspect-[16/10] bg-neutral-200 animate-pulse" />
+          <div className="p-4 space-y-3">
+            <div className="h-5 bg-neutral-200 rounded-md animate-pulse" />
+            <div className="h-4 w-1/2 bg-neutral-200 rounded-md animate-pulse" />
+            <div className="h-10 bg-neutral-200 rounded-full animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ===== Footer ===== */
 function Footer() {
   return (
-    <footer className="border-t border-neutral-200 bg-white mt-12">
+    <footer className="border-t border-neutral-200 bg-white">
       <div className="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-3 gap-8 text-sm">
         <div>
           <div className="font-extrabold text-xl tracking-tight mb-2">
